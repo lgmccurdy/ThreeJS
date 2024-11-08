@@ -25,27 +25,54 @@ camera.position.setZ(20);
 camera.position.setX(20);
 camera.position.setY(10);
 
-// Object texture mapping
 
-const texture = new THREE.TextureLoader().load('images/donut.jpg')
-const geometry = new THREE.TorusGeometry(6, 3, 16, 100);
-const material = new THREE.MeshBasicMaterial({map: texture });
-const torus = new THREE.Mesh(geometry, material);
+
+
+// Donut
+
+const donutTexture = new THREE.TextureLoader().load('images/donut.jpg');
+const donutGeometry = new THREE.TorusGeometry(3, 1.5, 16, 100);
+const donutMaterial = new THREE.MeshBasicMaterial({ map: donutTexture });
+const torus = new THREE.Mesh(donutGeometry, donutMaterial);
 scene.add(torus);
 
+torus.position.z = 12;
+torus.position.x = 5;
+torus.position.y = 7;
 
-torus.position.z = 3;
-torus.position.x = 3;
 
-torus.rotation.x += 0.01;  // Small incremental rotation along x-axis
-torus.rotation.y += 0.01;  // Small incremental rotation along y-axis
+
+// Diamond
+
+const diamondGeometry = new THREE.IcosahedronGeometry(1.9, 0);
+diamondGeometry.scale(1, 1.8, 1);
+const normalTexture = new THREE.TextureLoader().load('images/normalmap.png');
+
+const diamondMaterial = new THREE.MeshStandardMaterial({
+    normalMap: normalTexture,
+    color: 0xFF69B4,
+    roughness: 0.11,
+    metalness: 0.3,
+    clearcoat: 4.0,
+    clearcoatRoughness: 0.2
+});
+
+const diamond = new THREE.Mesh(diamondGeometry, diamondMaterial);
+scene.add(diamond);
+
+diamond.position.z = 4;
+diamond.position.x = torus.position.x + 8;
+diamond.position.y = 2;
+
+
+
 
 
 
 // Lights
 
 const pointLight = new THREE.PointLight(0xffffff);
-pointLight.position.set(0, -10, 10);
+pointLight.position.set(10,20, 10);
 scene.add(pointLight);
 
 
@@ -71,6 +98,8 @@ function animate() {
     // slowly rotate the cube:
     torus.rotation.x += 0.01;
     torus.rotation.y += 0.01;
+    diamond.rotation.x += 0.01;
+    diamond.rotation.y += 0.01;
     // rotate the icosahedron a little faster in the opposite direction:
 
     // ALLOWS YOUR ORBIT CONTROLS TO UPDATE LIVE IN REAL-TIME:
@@ -114,6 +143,8 @@ animate();
 // `
 
 // setupCounter(document.querySelector('#counter'))
+
+
 
 
 
