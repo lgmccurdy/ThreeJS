@@ -2,113 +2,120 @@ import * as THREE from 'https://cdn.skypack.dev/three@0.128.0/build/three.module
 import { OrbitControls } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
 
-
-
-
-
 // Setup
-
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.fov = 10; // Default is 75, try values lower than 75 for zoom-in effect
+camera.updateProjectionMatrix(); // Update the camera's projection matrix after changing the FOV
 
 
-// create a new renderer by instating the canvas element in our HTML // file
+
+// Create a new renderer by instantiating the canvas element in our HTML file
 const renderer = new THREE.WebGLRenderer({
     canvas: document.querySelector('#bg'),
 });
+
 renderer.render(scene, camera);
 
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-camera.position.setZ(20);
-camera.position.setX(20);
-camera.position.setY(10);
+renderer.toneMappingExposure = 2;
+renderer.outputEncoding = THREE.sRGBEncoding;
+camera.position.set(40, 40, 100); // Positioned above the pudding at (x=0, y=10, z=0)
 
 
+const ambientLight = new THREE.AmbientLight( 0xffffff, 0.4 );
+scene.add( ambientLight );
+
+const pointLight = new THREE.PointLight( 0xffffff, 0.6 );
+camera.add( pointLight );
+scene.add( camera );
 
 
-// Donut
+const loader = new GLTFLoader();
 
-const donutTexture = new THREE.TextureLoader().load('images/donut.jpg');
-const donutGeometry = new THREE.TorusGeometry(3, 1.5, 16, 100);
-const donutMaterial = new THREE.MeshBasicMaterial({ map: donutTexture });
-const torus = new THREE.Mesh(donutGeometry, donutMaterial);
-scene.add(torus);
+loader.load( 'models/macaron.glb', function ( gltf ) {
 
-torus.position.z = 12;
-torus.position.x = 5;
-torus.position.y = 7;
+    scene.add( gltf.scene );
+    gltf.scene.position.set(-8, -.7, 0);
+    gltf.scene.scale.set(1.3, 1.3, 1.3);
 
 
+}, undefined, function ( error ) {
 
-// Diamond
-
-const diamondGeometry = new THREE.IcosahedronGeometry(1.9, 0);
-diamondGeometry.scale(1, 1.8, 1);
-const normalTexture = new THREE.TextureLoader().load('images/normalmap.png');
-
-const diamondMaterial = new THREE.MeshStandardMaterial({
-    normalMap: normalTexture,
-    color: 0xFF69B4,
-    roughness: 0.11,
-    metalness: 0.3,
-    clearcoat: 4.0,
-    clearcoatRoughness: 0.2
-});
-
-const diamond = new THREE.Mesh(diamondGeometry, diamondMaterial);
-scene.add(diamond);
-
-diamond.position.z = 4;
-diamond.position.x = torus.position.x + 8;
-diamond.position.y = 2;
+    console.error( error );
 
 
+} );
+loader.load( 'models/donut.glb', function ( gltf ) {
+
+    scene.add( gltf.scene );
+    gltf.scene.position.set(8, -.8, 0);
+    gltf.scene.scale.set(1.5, 1.5, 1.5);
+
+}, undefined, function ( error ) {
+
+    console.error( error );
 
 
+} );
+loader.load( 'models/cupcake.glb', function ( gltf ) {
+
+    scene.add( gltf.scene );
+    gltf.scene.position.set(0, -1.5, 8);
+    gltf.scene.scale.set(1.5, 1.5, 1.5);
+
+}, undefined, function ( error ) {
+
+    console.error( error );
 
 
-// Lights
+} );
+loader.load( 'models/pudding.glb', function ( gltf ) {
 
-const pointLight = new THREE.PointLight(0xffffff);
-pointLight.position.set(10,20, 10);
-scene.add(pointLight);
+    scene.add( gltf.scene );
+    gltf.scene.position.set(0, -1.7, -8);
+    gltf.scene.scale.set(2, 2, 2);
+
+}, undefined, function ( error ) {
+
+    console.error( error );
 
 
-const ambientLight = new THREE.AmbientLight(0xffffff);
-ambientLight.position.set(25, -15, -400);
-scene.add(ambientLight);
+} );
+loader.load( 'models/platter.glb', function ( gltf ) {
 
-// Helper
-const lightHelper = new THREE.PointLightHelper(pointLight);
-scene.add(lightHelper)
+    scene.add( gltf.scene );
+    gltf.scene.position.set(0, -2, 0);
+    gltf.scene.scale.set(3, 1, 3);
+
+}, undefined, function ( error ) {
+
+    console.error( error );
+
+
+} );
 
 
 
 // Background
-const spaceTexture = new THREE.TextureLoader().load('images/background.png')
+const spaceTexture = new THREE.TextureLoader().load('images/background.png');
 scene.background = spaceTexture;
 
-const controls = new OrbitControls(camera, renderer.domElement)
-
+// OrbitControls
+const controls = new OrbitControls(camera, renderer.domElement);
 
 function animate() {
-    requestAnimationFrame( animate );
-    // slowly rotate the cube:
-    torus.rotation.x += 0.01;
-    torus.rotation.y += 0.01;
-    diamond.rotation.x += 0.01;
-    diamond.rotation.y += 0.01;
-    // rotate the icosahedron a little faster in the opposite direction:
-
-    // ALLOWS YOUR ORBIT CONTROLS TO UPDATE LIVE IN REAL-TIME:
-    controls.update()
+    requestAnimationFrame(animate);
 
 
-    renderer.render( scene, camera );
+    // Update the OrbitControls
+    controls.update();
+
+    // Render the scene
+    renderer.render(scene, camera);
 }
-
 
 animate();
 
@@ -116,33 +123,6 @@ animate();
 
 
 
-
-
-
-
-// import javascriptLogo from './javascript.svg'
-// import viteLogo from '/vite.svg'
-// import { setupCounter } from '../counter.js'
-
-// document.querySelector('#app').innerHTML = `
-//   <div>
-//     <a href="https://vite.dev" target="_blank">
-//       <img src="${viteLogo}" class="logo" alt="Vite logo" />
-//     </a>
-//     <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-//       <img src="${javascriptLogo}" class="logo vanilla" alt="JavaScript logo" />
-//     </a>
-//     <h1>Hello Vite!</h1>
-//     <div class="card">
-//       <button id="counter" type="button"></button>
-//     </div>
-//     <p class="read-the-docs">
-//       Click on the Vite logo to learn more
-//     </p>
-//   </div>
-// `
-
-// setupCounter(document.querySelector('#counter'))
 
 
 
