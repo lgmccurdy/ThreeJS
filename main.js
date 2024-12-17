@@ -20,6 +20,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 camera.position.set(80, 40, 110);
 renderer.render(scene, camera);
 
+//Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambientLight);
 
@@ -27,8 +28,8 @@ const pointLight = new THREE.PointLight(0xffffff, 0.6);
 camera.add(pointLight);
 scene.add(camera);
 
+//Loader & config of desserts
 const loader = new GLTFLoader();
-
 const desserts = [];
 let platter = null;
 let lastClickedDessert = null;
@@ -53,7 +54,7 @@ const dessertDescriptions = {
     }
 };
 
-
+// Dessert positions on platter
 const dessertConfig = {
     macaron: {
         position: [-8, 1.1, 0],
@@ -77,7 +78,7 @@ const dessertConfig = {
     }
 };
 
-// Create description overlay
+// Dessert description overlay
 function createDescriptionOverlay() {
     const overlay = document.createElement('div');
     overlay.id = 'dessert-description';
@@ -114,7 +115,7 @@ function createDescriptionOverlay() {
 
     return overlay;
 }
-// Create static text overlay at the top
+// Static text at top
 function createStaticText() {
     const staticText = document.createElement('div');
     staticText.id = 'static-text';
@@ -150,6 +151,8 @@ function hideDescriptionOverlay() {
     descriptionOverlay.style.display = 'none';
 }
 
+
+//Load dessert and platter
 function loadDessert(name, path, config, isInteractive = true) {
     return new Promise((resolve, reject) => {
         loader.load(
@@ -208,7 +211,6 @@ Promise.all([
 // Background
 scene.background = new THREE.Color('#FFF5EE');
 
-
 // OrbitControls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableRotate = false;
@@ -216,20 +218,20 @@ controls.enableZoom = false;
 controls.enablePan = false;
 controls.update();
 
-// Raycaster
+// Raycasting for click and hover
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 
 let currentRotationAnimation = null;
 
-
+// Mouse move events
 window.addEventListener('mousemove', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 });
 
-
+// Click events
 window.addEventListener('click', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -237,30 +239,28 @@ window.addEventListener('click', (event) => {
 
     raycaster.setFromCamera(mouse, camera);
 
-
+    // Perform intersection (hover) only with desserts
     const intersects = raycaster.intersectObjects(
         desserts.filter(dessert => dessert.userData.isInteractive), true
     );
 
-
+    // If dessert is clicked
     if (intersects.length > 0) {
         const clickedMesh = intersects[0].object;
         const parentDessert = clickedMesh.userData.parentDessert;
 
         if (parentDessert && platter) {
-
+            // Cancel any ongoing rotation animation
             if (currentRotationAnimation) {
                 cancelAnimationFrame(currentRotationAnimation);
             }
 
 
-            const targetRotation = parentDessert.userData.originalRotation;
-
-
+            // Show description for the clicked dessert
             showDessertDescription(parentDessert.userData.name);
             lastClickedDessert = parentDessert.userData.name;
 
-
+            // Animate rotation
             function rotateToCamera() {
                 const rotationSpeed = 0.1;
                 const currentRotation = platter.rotation.y;
@@ -276,7 +276,7 @@ window.addEventListener('click', (event) => {
 
                 let angleDifference = targetRotation - currentNormalized;
 
-
+                // Shortest rotation
                 if (Math.abs(angleDifference) > Math.PI) {
                     if (angleDifference > 0) {
                         angleDifference -= 2 * Math.PI;
@@ -285,11 +285,11 @@ window.addEventListener('click', (event) => {
                     }
                 }
 
-
+                // Smooth rotation
                 if (Math.abs(angleDifference) > 0.01) {
                     platter.rotation.y += angleDifference * rotationSpeed;
 
-
+                    // Move desserts with the platter
                     desserts.forEach(dessert => {
                         const localPos = dessert.userData.originalPosition.clone();
                         localPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), platter.rotation.y);
@@ -311,7 +311,7 @@ window.addEventListener('click', (event) => {
             rotateToCamera();
         }
     } else {
-
+        // Keep the last clicked dessert's description visible if clicked outside of desserts
         if (lastClickedDessert) {
             showDessertDescription(lastClickedDessert);
         }
@@ -324,21 +324,21 @@ function animate() {
 
     raycaster.setFromCamera(mouse, camera);
 
-
+    // Interact with desserts only
     const intersects = raycaster.intersectObjects(
         desserts.filter(dessert => dessert.userData.isInteractive), true
     );
 
-
+    // Original color reset for desserts
     desserts.forEach((dessert) => {
         dessert.traverse((child) => {
             if (child.isMesh) {
-                child.material.emissive.setHex(0x000000);
+                child.material.emissive.setHex(0x000000); // No emissive effect by default
             }
         });
     });
 
-
+    // Color change with hover
     if (intersects.length > 0) {
         const hoveredMesh = intersects[0].object;
         const parentDessert = hoveredMesh.userData.parentDessert;
