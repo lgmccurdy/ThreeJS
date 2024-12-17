@@ -20,6 +20,27 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 camera.position.set(80, 40, 110);
 renderer.render(scene, camera);
 
+// Add window resize handler
+function onWindowResize() {
+    // Update camera aspect ratio
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    // Resize renderer
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Adjust description overlay positioning
+    const descriptionOverlay = document.getElementById('dessert-description');
+    if (descriptionOverlay) {
+        descriptionOverlay.style.bottom = '7%';
+        descriptionOverlay.style.left = '50%';
+        descriptionOverlay.style.transform = 'translateX(-50%)';
+    }
+}
+
+// Add event listener for window resize
+window.addEventListener('resize', onWindowResize);
+
 //Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambientLight);
@@ -82,7 +103,7 @@ const dessertConfig = {
 function createDescriptionOverlay() {
     const overlay = document.createElement('div');
     overlay.id = 'dessert-description';
-    overlay.style.position = 'absolute';
+    overlay.style.position = 'fixed';
     overlay.style.bottom = '7%';
     overlay.style.left = '50%';
     overlay.style.transform = 'translateX(-50%)';
@@ -90,27 +111,44 @@ function createDescriptionOverlay() {
     overlay.style.padding = '15px';
     overlay.style.borderRadius = '10px';
     overlay.style.border = '3px solid #48260DFF';
-    overlay.style.maxWidth = '1500px';
+    overlay.style.maxWidth = '90%';
+    overlay.style.width = 'max-content';
     overlay.style.textAlign = 'center';
     overlay.style.display = 'none';
     overlay.style.zIndex = '1000';
+
+    // Make text responsive
+    overlay.style.fontSize = 'clamp(14px, 3vw, 24px)';
 
     const nameElement = document.createElement('h2');
     nameElement.id = 'dessert-name';
     nameElement.style.margin = '0 0 10px 0';
     nameElement.style.color = '#48260DFF';
     nameElement.style.fontFamily = "'Dessert Script', sans-serif";
-    nameElement.style.fontSize = '32px';
+    nameElement.style.fontSize = 'clamp(24px, 5vw, 32px)';
 
     const descriptionElement = document.createElement('p');
     descriptionElement.id = 'dessert-description-text';
     descriptionElement.style.margin = '0';
     descriptionElement.style.color = '#48260DFF';
-    descriptionElement.style.fontFamily ="'Dessert Script', sans-serif";
+    descriptionElement.style.fontFamily = "'Dessert Script', sans-serif";
 
     overlay.appendChild(nameElement);
     overlay.appendChild(descriptionElement);
     document.body.appendChild(overlay);
+
+
+    function adjustOverlaySize() {
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+
+        overlay.style.padding = viewportWidth < 600 ? '10px' : '15px';
+        overlay.style.maxWidth = viewportWidth < 600 ? '95%' : '90%';
+    }
+
+    window.addEventListener('resize', adjustOverlaySize);
+    adjustOverlaySize(); 
 
     return overlay;
 }
@@ -169,7 +207,6 @@ function loadDessert(name, path, config, isInteractive = true) {
         );
     });
 }
-
 
 Promise.all([
     loadDessert('macaron', 'models/macaron.glb', dessertConfig.macaron),
