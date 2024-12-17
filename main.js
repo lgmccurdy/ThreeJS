@@ -20,6 +20,9 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 camera.position.set(80, 40, 110);
 renderer.render(scene, camera);
 
+
+
+//Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambientLight);
 
@@ -27,11 +30,11 @@ const pointLight = new THREE.PointLight(0xffffff, 0.6);
 camera.add(pointLight);
 scene.add(camera);
 
+//Loader & config of desserts
 const loader = new GLTFLoader();
-
-const desserts = []; // Store dessert meshes for hover effect
-let platter = null; // Store platter reference
-let lastClickedDessert = null; // Track the last clicked dessert
+const desserts = [];
+let platter = null;
+let lastClickedDessert = null;
 
 // Dessert descriptions
 const dessertDescriptions = {
@@ -53,7 +56,7 @@ const dessertDescriptions = {
     }
 };
 
-// Predefined rotation angles and initial positions
+// Dessert positions on platter
 const dessertConfig = {
     macaron: {
         position: [-8, 1.1, 0],
@@ -77,7 +80,7 @@ const dessertConfig = {
     }
 };
 
-// Create description overlay
+// Dessert description overlay
 function createDescriptionOverlay() {
     const overlay = document.createElement('div');
     overlay.id = 'dessert-description';
@@ -98,15 +101,14 @@ function createDescriptionOverlay() {
     nameElement.id = 'dessert-name';
     nameElement.style.margin = '0 0 10px 0';
     nameElement.style.color = '#48260DFF';
-    nameElement.style.fontFamily = "'Dessert Script', sans-serif"; // Dynamically set the font
-    nameElement.style.fontSize = '32px'; // Adjust this value to make it bigger
-
+    nameElement.style.fontFamily = "'Dessert Script', sans-serif";
+    nameElement.style.fontSize = '32px';
 
     const descriptionElement = document.createElement('p');
     descriptionElement.id = 'dessert-description-text';
     descriptionElement.style.margin = '0';
     descriptionElement.style.color = '#48260DFF';
-    descriptionElement.style.fontFamily ="'Dessert Script', sans-serif"; // Dynamically set the font
+    descriptionElement.style.fontFamily ="'Dessert Script', sans-serif";
 
     overlay.appendChild(nameElement);
     overlay.appendChild(descriptionElement);
@@ -114,28 +116,8 @@ function createDescriptionOverlay() {
 
     return overlay;
 }
-// Create static text overlay at the top
-function createStaticText() {
-    const staticText = document.createElement('div');
-    staticText.id = 'static-text';
-    staticText.style.position = 'fixed';
-    staticText.style.top = '50px';
-    staticText.style.left = '50%';
-    staticText.style.transform = 'translateX(-50%)';
-    staticText.style.padding = '10px 20px';
-    staticText.style.borderRadius = '5px';
-    staticText.style.color = '#48260DFF';
-    staticText.style.fontFamily = "'Dessert Script', sans-serif";
-    staticText.style.fontSize = '20px';
-    staticText.style.textAlign = 'center';
-    staticText.style.zIndex = '1000';
-    staticText.textContent = "Click a dessert to rotate the platter and learn more!";
-
-    document.body.appendChild(staticText);
-}
 
 const descriptionOverlay = createDescriptionOverlay();
-createStaticText();
 
 function showDessertDescription(dessertName) {
     const description = dessertDescriptions[dessertName];
@@ -150,6 +132,8 @@ function hideDescriptionOverlay() {
     descriptionOverlay.style.display = 'none';
 }
 
+
+//Load dessert and platter
 function loadDessert(name, path, config, isInteractive = true) {
     return new Promise((resolve, reject) => {
         loader.load(
@@ -159,7 +143,6 @@ function loadDessert(name, path, config, isInteractive = true) {
                 dessert.position.set(...config.position);
                 dessert.scale.set(...config.scale);
 
-                // Mark metadata
                 dessert.userData.isInteractive = isInteractive;
                 dessert.userData.name = name;
                 dessert.userData.originalPosition = new THREE.Vector3(...config.position);
@@ -190,7 +173,7 @@ function loadDessert(name, path, config, isInteractive = true) {
     });
 }
 
-// Load desserts and platter
+
 Promise.all([
     loadDessert('macaron', 'models/macaron.glb', dessertConfig.macaron),
     loadDessert('donut', 'models/donut.glb', dessertConfig.donut),
@@ -202,47 +185,44 @@ Promise.all([
         scale: [3, 1, 3]
     }, false)
 ]).then(() => {
-    // Initial setup complete
+
 });
 
 // Background
-scene.background = new THREE.Color('#FFF5EE'); // Set background to the desired color
+scene.background = new THREE.Color('#FFF5EE');
 
-
-// OrbitControls - Disabling user interaction
+// OrbitControls
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableRotate = false; // Disable rotation
-controls.enableZoom = false;   // Disable zoom
-controls.enablePan = false;    // Disable panning
+controls.enableRotate = false;
+controls.enableZoom = false;
+controls.enablePan = false;
 controls.update();
 
-// Raycaster for hover and click detection
+// Raycasting for click and hover
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// Track current animation state
 let currentRotationAnimation = null;
 
-// Listen for mouse move events
+// Mouse move events
 window.addEventListener('mousemove', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 });
 
-// Listen for click events
+// Click events
 window.addEventListener('click', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    // Update the raycaster
     raycaster.setFromCamera(mouse, camera);
 
-    // Perform intersection only with interactive desserts
+    // Perform intersection (hover) only with desserts
     const intersects = raycaster.intersectObjects(
         desserts.filter(dessert => dessert.userData.isInteractive), true
     );
 
-    // If a dessert is clicked
+    // If dessert is clicked
     if (intersects.length > 0) {
         const clickedMesh = intersects[0].object;
         const parentDessert = clickedMesh.userData.parentDessert;
@@ -253,9 +233,6 @@ window.addEventListener('click', (event) => {
                 cancelAnimationFrame(currentRotationAnimation);
             }
 
-            // Get the rotation for the clicked dessert
-            const targetRotation = parentDessert.userData.originalRotation;
-
             // Show description for the clicked dessert
             showDessertDescription(parentDessert.userData.name);
             lastClickedDessert = parentDessert.userData.name;
@@ -265,18 +242,15 @@ window.addEventListener('click', (event) => {
                 const rotationSpeed = 0.1;
                 const currentRotation = platter.rotation.y;
 
-                // Normalize target rotation to be within [0, 2π]
                 let targetRotation = parentDessert.userData.originalRotation % (2 * Math.PI);
                 let currentNormalized = currentRotation % (2 * Math.PI);
 
-                // Adjust current rotation to be in the same range as target
                 if (currentNormalized < 0) currentNormalized += 2 * Math.PI;
                 if (targetRotation < 0) targetRotation += 2 * Math.PI;
 
-                // Calculate the shortest rotation path
                 let angleDifference = targetRotation - currentNormalized;
 
-                // Adjust for shortest rotation
+                // Shortest rotation
                 if (Math.abs(angleDifference) > Math.PI) {
                     if (angleDifference > 0) {
                         angleDifference -= 2 * Math.PI;
@@ -285,7 +259,7 @@ window.addEventListener('click', (event) => {
                     }
                 }
 
-                // Smoothly interpolate rotation
+                // Smooth rotation
                 if (Math.abs(angleDifference) > 0.01) {
                     platter.rotation.y += angleDifference * rotationSpeed;
 
@@ -298,7 +272,6 @@ window.addEventListener('click', (event) => {
 
                     currentRotationAnimation = requestAnimationFrame(rotateToCamera);
                 } else {
-                    // Ensure final precise position
                     platter.rotation.y = targetRotation;
                     desserts.forEach(dessert => {
                         const localPos = dessert.userData.originalPosition.clone();
@@ -311,7 +284,7 @@ window.addEventListener('click', (event) => {
             rotateToCamera();
         }
     } else {
-        // If clicked outside of desserts, keep the last clicked dessert's description visible
+        // Keep the last clicked dessert's description visible if clicked outside of desserts
         if (lastClickedDessert) {
             showDessertDescription(lastClickedDessert);
         }
@@ -321,15 +294,14 @@ window.addEventListener('click', (event) => {
 function animate() {
     requestAnimationFrame(animate);
 
-    // Update the raycaster
     raycaster.setFromCamera(mouse, camera);
 
-    // Perform intersection only with interactive desserts
+    // Interact with desserts only
     const intersects = raycaster.intersectObjects(
         desserts.filter(dessert => dessert.userData.isInteractive), true
     );
 
-    // Reset all desserts to their original emissive color
+    // Original color reset for desserts
     desserts.forEach((dessert) => {
         dessert.traverse((child) => {
             if (child.isMesh) {
@@ -338,16 +310,16 @@ function animate() {
         });
     });
 
-    // Change emissive color of the intersected dessert
+    // Color change with hover
     if (intersects.length > 0) {
         const hoveredMesh = intersects[0].object;
-        const parentDessert = hoveredMesh.userData.parentDessert; // Get parent dessert
+        const parentDessert = hoveredMesh.userData.parentDessert;
 
         if (parentDessert) {
             parentDessert.traverse((child) => {
                 if (child.isMesh) {
-                    child.material.emissive.setHex(0xff69b4); // Red emissive effect
-                    child.material.emissiveIntensity = 0.4; // Adjust intensity for a subtler effect
+                    child.material.emissive.setHex(0xff69b4);
+                    child.material.emissiveIntensity = 0.4;
                 }
             });
         }
